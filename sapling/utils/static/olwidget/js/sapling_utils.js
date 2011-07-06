@@ -143,7 +143,7 @@ SaplingMap = {
         var results = $('<ol>');
         var viewedArea = map.getExtent().toGeometry().getArea();
         $.each(layer.features, function(index, feature) {
-            if(feature == selectedFeature)
+           if(feature == selectedFeature)
                 return;
            setAlpha(feature, viewedArea);
            var listResult = false;
@@ -196,7 +196,13 @@ SaplingMap = {
                        new OpenLayers.Projection('EPSG:4326')).toBBOX();
               
         var zoom = map.getZoom();
+        var myDataToken = Math.random();
+        map.dataToken = myDataToken;
         $.get('_objects/', { 'bbox': bbox, 'zoom': zoom }, function(data){
+        	if(map.dataToken != myDataToken)
+        	{
+        		return;
+        	}
             layer.dataExtent = extent;
             var temp = new olwidget.InfoLayer(data);
             temp.visibility = false;
@@ -210,7 +216,7 @@ SaplingMap = {
             $.each(temp.features, function(index, feature) {
               feature.map = map;
               if(selectedFeature && selectedFeature.geometry.toString() == feature.geometry.toString())
-                return;
+                  return;
               layer.addFeatures(feature);
             });
             map.removeLayer(temp);
