@@ -1,0 +1,25 @@
+{% load comments %}
+{% load i18n %}
+{% load url from future %}
+
+<dl id="comments">
+  {% for comment in comment_list %}
+  <span class="comment" itemscope itemtype="http://data-vocabulary.org/Review">
+  <dt id="c{{ comment.id }}"> 
+    <meta itemprop="itemreviewed" content="{{ comment.content_object.name }}" />
+    <time itemprop="dtreviewed" datetime="{{ comment.submit_date.isoformat }}">{{ comment.submit_date }}</time>
+    <span>—</span>
+    <a itemprop="reviewer" href="{{ comment.user.get_absolute_url }}">{{ comment.name }}</a>
+    {% if comment.user == user %}
+    <span id="{{ comment.pk }}" class="edit_comment_button" title="Edit this comment">✍</span>
+    <span id="{{ comment.pk }}" class="delete_comment_button" title="Delete this comment">✘</span>
+    {% endif %}
+  </dt>
+  <dd>
+    <p {% if comment.user == user %}class="editable_comment_body"
+       {% else %}class="comment_body"{% endif %}
+       id="{{ comment.pk }}" itemprop="description">{{ comment.comment }}</p>
+  </dd>
+  </span>
+  {% endfor %}
+</dl>

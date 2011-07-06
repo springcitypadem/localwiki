@@ -1,0 +1,23 @@
+{% load comments %}
+{% load i18n %}
+{% get_comment_count for page as comment_count %}
+{% if comment_count > 0 and user.is_authenticated %}
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="{{ STATIC_URL }}js/csrfcookie.js"></script>
+<script type="text/javascript">
+// In-Line text editing for comments
+$(document).ready(function() {
+    $('.editable_comment_body').editable('/comments/post/', {
+        type: 'textarea',
+        submit: '{% trans "Save changes" %}',
+        cancel: '{% trans "Cancel" %}',
+        event: 'editclick'
+    });
+    $('.edit_comment_button').click(function(event) {
+        var pk = $(event.currentTarget).attr("id");
+        $('p[class="editable_comment_body"][id="' + pk + '"]').trigger('editclick');
+    });
+});
+</script>
+{% endif %}

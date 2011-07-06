@@ -1,0 +1,23 @@
+{% load comments %}
+{% load url from future %}
+
+<aside>
+  <header>
+    <h1>Comments</h1>
+  </header>
+  {% render_comment_list for object %}
+
+  {% if request.user.is_authenticated %}
+    <h2>Add a comment</h2>
+    <p>Your comment will be attributed to
+    {% if request.user.name %}
+      <strong>{{ request.user.name }}</strong>.</p>
+    {% else %}
+      <strong>{{ request.user }}</strong>.</p>
+    {% endif %}
+    {% render_comment_form for object %}
+  {% else %}
+    <p><strong>Want to participate?</strong>
+    <a href="{% url 'django.contrib.auth.views.login' %}?next={{ request.path }}">Log in</a> or <a href="{% url 'registration_register' %}?next={{ request.path }}">create an account</a>.</p>
+  {% endif %}
+</aside>
