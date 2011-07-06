@@ -72,6 +72,8 @@ OL_API = STATIC_URL + 'openlayers/OpenLayers.js'
 OLWIDGET_CSS = '%solwidget/css/sapling.css' % STATIC_URL
 CLOUDMADE_API = '%solwidget/js/sapling_cloudmade.js' % STATIC_URL
 
+COMMENTS_APP = 'comments'
+
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
@@ -108,11 +110,15 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
+    # Local apps that override Django-provided templates
+    'comments',
+
     # Django-provided apps
     'django.contrib.auth',
     'django.contrib.admin',
     'django.contrib.gis',
     'django.contrib.contenttypes',
+    'django.contrib.comments',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.sites',
