@@ -39,7 +39,6 @@ class VersionedCommentAdmin(admin.ModelAdmin):
         }),
     )
 
-
 class VersionedCommentInline(generic.GenericStackedInline):
     model = VersionedComment
     ordering = ('-submit_date',)
@@ -52,13 +51,12 @@ class VersionedCommentInline(generic.GenericStackedInline):
                        'get_admin_edit_link',)
     fieldsets = (
         (None, {
-            'fields': ('get_admin_edit_link',)
+            'fields': ('get_admin_edit_link', 'get_history_list',)
         }),
         ('Comment information', {
             'classes': ('collapse',),
             'fields': (('user', 'ip_address', 'site', 'submit_date',),
-                       'comment', ('is_public', 'is_removed',),
-                       'get_history_list'),
+                       'comment', ('is_public', 'is_removed',),),
         }),
     )
 
