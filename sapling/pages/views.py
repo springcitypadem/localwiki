@@ -6,8 +6,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic.base import RedirectView
 from django.views.generic.simple import direct_to_template
 from django.views.generic import DetailView, ListView
-from django.http import HttpResponseNotFound, HttpResponseRedirect,\
-                        HttpResponseBadRequest
+from django.http import (HttpResponseNotFound, HttpResponseRedirect,
+                         HttpResponseBadRequest)
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
@@ -21,6 +21,8 @@ from models import Page, PageFile, url_to_name
 from forms import PageForm, PageFileForm
 from maps.widgets import InfoMap
 
+from models import slugify
+
 # Where possible, we subclass similar generic views here.
 
 
@@ -29,10 +31,10 @@ class PageDetailView(Custom404Mixin, DetailView):
     context_object_name = 'page'
 
     def handler404(self, request, *args, **kwargs):
+        name = url_to_name(kwargs['original_slug'])
         return HttpResponseNotFound(
             direct_to_template(request, 'pages/page_new.html',
-                               {'name': url_to_name(kwargs['original_slug']),
-                                'page': Page(slug=kwargs['slug'])})
+                               {'page': Page(name=name, slug=kwargs['slug'])})
         )
 
     def get_context_data(self, **kwargs):
@@ -251,6 +253,19 @@ class PageCompareView(diff.views.CompareView):
         return context
 
 
+class PageCreateView(RedirectView):
+    """
+    A convenience view that redirects either to the editor (for a new
+    page) or to the page (if it already exists).
+    """
+    def get_redirect_url(self, **kwargs):
+        pagename = self.request.GET.get('pagename')
+        if Page.objects.filter(slug=slugify(pagename)):
+            return Page.objects.get(slug=slugify(pagename)).get_absolute_url()
+        else:
+            return reverse('pages:edit', args=[pagename])
+
+
 @require_POST
 def upload(request, slug, **kwargs):
     error = None
@@ -277,17 +292,11 @@ def upload(request, slug, **kwargs):
                                             args=[slug, kwargs['file']]))
 
     # uploaded from ckeditor
+    relative_url = '_files/' + uploaded.name
     try:
         file = PageFile(file=uploaded, name=uploaded.name, slug=slug)
         file.save()
-        relative_url = '_files/' + uploaded.name
         return ck_upload_result(request, url=relative_url)
     except IntegrityError:
         error = 'A file with this name already exists'
-    return ck_upload_result(request,
-                            message=error)
-
-
-class FrontPageView(PageDetailView):
-    def get_object(self):
-        return Page.objects.get(slug="front page")
+    return ck_upload_result(request, url=relative_url, message=error)

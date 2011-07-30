@@ -1,5 +1,7 @@
 SaplingMap = {
 
+    is_dirty: false,
+
     init_openlayers: function() {
         OpenLayers.Control.LayerSwitcher.prototype.roundedCorner = false;
         var base_initOptions = olwidget.Map.prototype.initOptions;
@@ -31,6 +33,15 @@ SaplingMap = {
     },
 
     setup_map: function(map) {
+        if (window.addEventListener) {
+            window.addEventListener('beforeunload', this.beforeUnload, false);
+        }
+        else {
+            window.attachEvent('onbeforeunload', this.beforeUnload);
+        } 
+        $('#content form').submit(function() { SaplingMap.is_dirty = false; });
+        $('#editor_actions .cancel').click(function() { SaplingMap.is_dirty = false; });
+
         if(map.opts.dynamic) {
             this.setup_dynamic_map(map);
         }
@@ -57,7 +68,8 @@ SaplingMap = {
         layer.events.register("featureselected", null, function(evt) {
           var feature = evt.feature;
           var featureBounds = feature.geometry.bounds;
-          $('#results_pane').css('display', 'inline-block');
+          $('#results_pane').css('display', 'block');
+          $('.mapwidget').css('float', 'left');
           size_map();
           map.updateSize();
           if(feature.geometry.CLASS_NAME != "OpenLayers.Geometry.Point")
@@ -80,6 +92,12 @@ SaplingMap = {
           layer.drawFeature(evt.feature);
         })
         loadObjects(map, layer);
+    },
+
+    beforeUnload: function(e) {
+        if(SaplingMap.is_dirty) {
+            return e.returnValue = "You've made changes but haven't saved.  Are you sure you want to leave this page?";
+        }
     },
 
     _displayRelated: function(map) {
@@ -125,7 +143,7 @@ SaplingMap = {
         var results = $('<ol>');
         var viewedArea = map.getExtent().toGeometry().getArea();
         $.each(layer.features, function(index, feature) {
-            if(feature == selectedFeature)
+           if(feature == selectedFeature)
                 return;
            setAlpha(feature, viewedArea);
            var listResult = false;
@@ -178,7 +196,13 @@ SaplingMap = {
                        new OpenLayers.Projection('EPSG:4326')).toBBOX();
               
         var zoom = map.getZoom();
+        var myDataToken = Math.random();
+        layer.dataToken = myDataToken;
         $.get('_objects/', { 'bbox': bbox, 'zoom': zoom }, function(data){
+            if(layer.dataToken != myDataToken)
+            {
+                return;
+            }
             layer.dataExtent = extent;
             var temp = new olwidget.InfoLayer(data);
             temp.visibility = false;
@@ -192,7 +216,7 @@ SaplingMap = {
             $.each(temp.features, function(index, feature) {
               feature.map = map;
               if(selectedFeature && selectedFeature.geometry.toString() == feature.geometry.toString())
-                return;
+                  return;
               layer.addFeatures(feature);
             });
             map.removeLayer(temp);
@@ -206,7 +230,12 @@ SaplingMap = {
         // Switch to "modify" mode after adding a feature.
         var self = this;
         layer.events.register("featureadded", null, function () {
-                self._set_modify_control(layer);
+            self.is_dirty = true;
+            self._set_modify_control(layer);
+        });
+
+        layer.events.register("featuremodified", null, function () {
+            self.is_dirty = true;
         });
 
         // Key commands for undo/redo.

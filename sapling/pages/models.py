@@ -9,17 +9,17 @@ from django.template.defaultfilters import stringfilter
 from django.core.exceptions import ValidationError
 from django.utils.safestring import mark_safe
 
-from django_randomfilenamestorage.storage import\
-    RandomFilenameFileSystemStorage
+from django_randomfilenamestorage.storage import (
+    RandomFilenameFileSystemStorage)
 
 from ckeditor.models import HTML5FragmentField
 from versionutils import diff
 from versionutils.versioning import TrackChanges
 
-allowed_tags = ['p', 'a', 'em', 'strong', 'u', 'img', 'h1', 'h2', 'h3', 'h4',
-                'h5', 'h6', 'hr', 'ul', 'ol', 'li', 'pre', 'table', 'thead',
-                'tbody', 'tr', 'th', 'td', 'span', 'strike', 'sub', 'sup',
-                'tt']
+allowed_tags = ['p', 'br', 'a', 'em', 'strong', 'u', 'img', 'h1', 'h2', 'h3',
+                'h4', 'h5', 'h6', 'hr', 'ul', 'ol', 'li', 'pre', 'table',
+                'thead', 'tbody', 'tr', 'th', 'td', 'span', 'strike', 'sub',
+                'sup', 'tt']
 
 
 class Page(models.Model):
@@ -77,6 +77,10 @@ class PageFile(models.Model):
                        (r'^application/vnd.ms-excel', 'excel')
                       ]
 
+    def get_absolute_url(self):
+        return reverse('pages:file',
+            kwargs={'slug': self.slug, 'file': self.name})
+
     @property
     def rough_type(self):
         mime = self.mime_type
@@ -108,7 +112,8 @@ def clean_name(name):
 
 
 def slugify(value, keep=r"\-\.,'\"/!@$%&*()"):
-    """Normalizes page name for db lookup
+    """
+    Normalizes page name for db lookup
 
     Args:
         value: String or unicode object to normalize.

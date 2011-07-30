@@ -1,8 +1,9 @@
 from django.conf.urls.defaults import *
+from django.views.decorators.http import require_POST
 from django.views.generic import ListView
 
 from views import *
-from feeds import PageChangesFeed
+from feeds import PageChangesFeed, PageFileChangesFeed
 import models
 from utils.constants import DATETIME_REGEXP
 from models import Page
@@ -28,10 +29,11 @@ def slugify(func):
 
 
 urlpatterns = patterns('',
-    #########################################################
+    ###########################################################
     # Files URLs
     # TODO: break out into separate files app with own URLs
-    #########################################################
+    # TODO: shouldn't some of these be _history and not _info?
+    ###########################################################
     url(r'^(?P<slug>.+)/_files/$', slugify(PageFileListView.as_view()),
         name='filelist'),
     url(r'^(?P<slug>.+)/_files/(?P<file>.+)/_revert/(?P<version>[0-9]+)$',
@@ -40,6 +42,8 @@ urlpatterns = patterns('',
         slugify(upload), name='file-upload'),
     url(r'^(?P<slug>.+)/_files/(?P<file>.+)/_info/$',
         slugify(PageFileInfo.as_view()), name='file-info'),
+    url(r'^(?P<slug>.+)/_files/(?P<file>.+)/_info/_feed/*$',
+        PageFileChangesFeed(), name='file-changes-feed'),
     url(r'^(?P<slug>.+)/_files/(?P<file>.+)/_info/compare$',
         slugify(PageFileCompareView.as_view())),
     url((r'^(?P<slug>.+)/_files/(?P<file>.+)/_info/'
@@ -50,10 +54,11 @@ urlpatterns = patterns('',
         % (DATETIME_REGEXP, DATETIME_REGEXP),
         slugify(PageFileCompareView.as_view()), name='file-compare-dates'),
     url(r'^(?P<slug>.+)/_files/(?P<file>.+)/_info/(?P<version>[0-9]+)$',
-        slugify(PageFileVersionDetailView.as_view()), name='as_of_version'),
+        slugify(PageFileVersionDetailView.as_view()),
+        name='file-as_of_version'),
     url(r'^(?P<slug>.+)/_files/(?P<file>.+)/_info/(?P<date>%s)$'
         % DATETIME_REGEXP, slugify(PageFileVersionDetailView.as_view()),
-        name='as_of_date'),
+        name='file-as_of_date'),
     url(r'^(?P<slug>.+)/_files/(?P<file>.+)$', slugify(PageFileView.as_view()),
         name='file'),
     url(r'^(?P<slug>.+)/_upload', slugify(upload), name='upload-image'),
@@ -93,10 +98,13 @@ urlpatterns = patterns('',
     url(r'^(?P<slug>.+)/_revert/(?P<version>[0-9]+)$',
         slugify(PageRevertView.as_view()), name='revert'),
 
+    url(r'^_create$', PageCreateView.as_view(), name='create'),
+
     ##########################################################
     # Basic page URLs.
     ##########################################################
-    url(r'^/*$', FrontPageView.as_view(), name='frontpage'),
+    url(r'^/*$', slugify(PageDetailView.as_view()),
+        kwargs={'slug': 'Front Page'}, name='frontpage'),
     url(r'^(?i)All_Pages/*$', ListView.as_view(**page_list_info),
         name='index'),
     # Catch-all and route to a page.

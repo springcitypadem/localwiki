@@ -32,6 +32,38 @@ CKEDITOR.plugins.add( 'simpleimage',
 				if ( element.is( 'img' ) && !element.getAttribute( '_cke_realelement' ) )
 					evt.data.dialog = 'simpleimage';
 			});
+
+		// Clean up text pasted into caption
+		editor.on( 'paste', function( evt )
+		{
+			var selection = editor.getSelection();
+			var element = selection.getStartElement();
+			var frame = jQuery(element.$).closest('.image_frame');
+			if(element && frame.length)
+			{
+				editor.plugins['domcleanup'].removeBlocks = true;
+				editor.plugins['domcleanup'].customAllowedTags = ['a', 'br', 'strong', 'em'];
+				var cleanHtml = editor.dataProcessor.toHtml( evt.data.html );
+				var fragment = CKEDITOR.htmlParser.fragment.fromHtml(cleanHtml);
+				var writer = new CKEDITOR.htmlWriter();
+				var range = selection.getRanges()[0];
+				range.deleteContents();
+				jQuery.each(fragment.children, function(index, child) {
+					var writer = new CKEDITOR.htmlWriter();
+					child.writeHtml(writer);
+					range.insertNode(CKEDITOR.dom.element.createFromHtml(writer.getHtml()));
+					range.collapse(false);
+					selection.selectRanges([range]);
+				});
+				evt.stop();
+			}
+		}, null, null, 1);
+		
+		editor.on( 'paste', function( evt ) {
+			editor.plugins['domcleanup'].removeBlocks = false;
+			editor.plugins['domcleanup'].customAllowedTags = false;
+		}, null, null, 99999);
+
 		// outerHTML plugin for jQuery
 		jQuery.fn.outerHTML = function(s) {
 		return (s)
@@ -71,7 +103,16 @@ CKEDITOR.plugins.add( 'simpleimage',
 		          jQuery(evt.sender.$).find('.editor_temp').remove();
 		        }
 		    });
-			
+		    // resize caption when image resized using handles (FF, IE)
+			jQuery('span.image_frame', editor.document.$.body).live('mousedown', function(evt){
+				var frame = this;
+				jQuery(editor.document.$).one('mouseup', function(evt){
+					var caption = jQuery(frame).css({'width':'', 'height':''}).find('span.image_caption');
+					var img = jQuery(frame).find('img');
+					caption.css({'width':img.css('width'), 'height':''});
+					jQuery(window).resize();
+				});
+			});
 		   	jQuery(editor.document.$.body).bind('dragstart', function(evt){
 		   		editor.fire('saveSnapshot');
 		   		var img = jQuery(evt.target);

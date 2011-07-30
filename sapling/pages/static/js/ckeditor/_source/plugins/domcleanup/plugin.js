@@ -8,18 +8,25 @@ CKEDITOR.plugins.add( 'domcleanup',
 {
     init : function( editor )
     {
-        var allowed_tags = ['p','a','em','strong','u','img','h1','h2','h3',
-        'h4','h5','hr','ul','ol','li','table','thead','tbody','tr','th','td',
-        'strike','sub','sup'];
+        var allowed_tags = ['p','br','a','em','strong','u','img','h1','h2',
+        'h3','h4','h5','hr','ul','ol','li','table','thead','tbody','tr','th',
+        'td','strike','sub','sup'];
         if(editor.config.domcleanupAllowedTags)
             allowed_tags = editor.config.domcleanupAllowedTags;
         editor.plugins['domcleanup'].allowedTags = allowed_tags;
-
-        editor.on( 'paste', function( evt )
-        {
-        // haven't had to customize this, yet
-        });
         
+        // Clean up text pasted into 'pre'
+		editor.on( 'paste', function( evt )
+		{
+			var selection = editor.getSelection();
+			var element = selection.getStartElement();
+			if(element && jQuery(element.$).closest('pre').length)
+				editor.plugins['domcleanup'].removeBlocks = true;
+		}, null, null, 1);
+		
+		editor.on( 'paste', function( evt ) {
+			editor.plugins['domcleanup'].removeBlocks = false;
+		}, null, null, 99999);
     },
     afterInit : function( editor )
     {
@@ -49,6 +56,7 @@ CKEDITOR.plugins.add( 'domcleanup',
                         if(drop_tags.indexOf(element.name) != -1)
                             return false;
                         var ok_tags = editor.plugins['domcleanup'].allowedTags;
+                        var custom_tags = editor.plugins['domcleanup'].customAllowedTags
                         var ok_attributes = {
                             'p' : ['class','style'],
                             'ul' : ['class'],
@@ -58,6 +66,31 @@ CKEDITOR.plugins.add( 'domcleanup',
                             'table' : ['class','style'],
                             'th': ['colspan','rowspan','style'],
                             'td': ['colspan','rowspan','style']
+                        };
+                        var block_elements = {
+                            'div': 1,
+                            'p': 1,
+                            'pre': 1,
+                            'h1': 1,
+                            'h2': 1, 
+                            'h3': 1, 
+                            'h4': 1, 
+                            'h5': 1, 
+                            'h6': 1,
+                            'hr': 1,
+                            'li': 1,
+                            'ol': 1,
+                            'ul': 1,
+                            'dl': 1,
+                            'dt': 1,
+                            'dd': 1,
+                            'table': 1,
+                            'tr': 1,
+                            'td': 1,
+                            'th': 1,
+                            'thead': 1,
+                            'tbody': 1,
+                            'tfoot': 1
                         };
                         for(attr in element.attributes)
                         {
@@ -70,20 +103,27 @@ CKEDITOR.plugins.add( 'domcleanup',
                             }
                      
                         }
+                        if(editor.plugins['domcleanup'].removeBlocks)
+                        {
+                            if(block_elements[element.name])
+                            {
+                                element.name = '';
+                                element.add(new CKEDITOR.htmlParser.element('br'));
+                                return element;
+                            }
+                        }
                         if(ok_tags.indexOf(element.name) > -1)
-                            return element;
-                        var remap = {'br':'p',
-                                     'i': 'em',
-                                     'b': 'strong'
+                        {
+                            if(!custom_tags || custom_tags.indexOf(element.name) > -1 )
+                                return element;
+                        }
+                        var remap = {'i': 'em',
+                                     'b': 'strong',
+                                     'div': 'p'
                                     };
                         if(remap[element.name])
                         {
                             element.name = remap[element.name];
-                            if(element.isEmpty &&
-                              !(element.children && element.children.length) &&
-                              element.parent && element.parent.name == 'p' &&
-                              element.parent.children.length == 1)
-                                element.name = '';
                         }
                         else element.name = '';
                         return element;

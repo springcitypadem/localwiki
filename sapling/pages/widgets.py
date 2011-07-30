@@ -1,5 +1,7 @@
 from urlparse import urljoin
+
 from django.conf import settings
+
 from ckeditor.widgets import CKEditor
 import models
 
@@ -10,12 +12,14 @@ class WikiEditor(CKEditor):
         additional = {
             'skin': 'sapling',
             'bodyClass': 'page_editor',
-            'filebrowserInsertimageUploadUrl': '_upload/',
+            'filebrowserInsertimageUploadUrl': '_upload',
             'filebrowserInsertimageBrowseUrl': '_filebrowser/images',
-            'filebrowserAttachfileUploadUrl': '_upload/',
+            'filebrowserAttachfileUploadUrl': '_upload',
             'filebrowserAttachfileBrowseUrl': '_filebrowser/files',
             'domcleanupAllowedTags': models.allowed_tags,
             'toolbarCanCollapse': False,
+            'disableNativeSpellChecker': False,
+            'browserContextMenuOnCtrl': True,
             'enterMode': 1,
             'stylesSet': [{'name': 'Normal', 'element': 'p'},
                           {'name': 'Heading 1', 'element': 'h1'},
@@ -27,6 +31,11 @@ class WikiEditor(CKEditor):
             'indentClasses': ['indent1', 'indent2', 'indent3', 'indent4',
                               'indent5', 'indent6', 'indent7', 'indent8',
                               'indent9', 'indent10'],
+            'removeFormatAttributes': '',
+            'removeFormatTags': (
+                'a,h1,h2,h3,h4,h5,h6,b,big,code,del,dfn,em,'
+                'font,i,ins,kbd,q,samp,small,strike,strong,sub,'
+                'sup,tt,u,var'),
         }
         config.update(additional)
         return config
@@ -42,7 +51,8 @@ class WikiEditor(CKEditor):
     def get_extra_plugins(self):
         plugins = ['insertimage', 'simpleimage', 'domcleanup', 'seamless',
                    'simpletable', 'simpletabletools', 'customenterkey',
-                   'pagelink', 'inheritcss', 'stylescombo', 'customsourcearea']
+                   'pagelink', 'inheritcss', 'customstylescombo',
+                   'customsourcearea', 'ckfixes']
         return ','.join(plugins)
 
     def get_toolbar(self):
@@ -54,14 +64,20 @@ class WikiEditor(CKEditor):
         align = ['JustifyLeft', 'JustifyCenter', 'JustifyRight']
         indent = ['Outdent', 'Indent']
         sub = ['Subscript', 'Superscript']
+        advanced = ['RemoveFormat']
 
         toolbar = [basic_styles, styles, links, media, lists, align, indent,
-                   sub]
+                   sub, advanced]
         if settings.DEBUG:
-            toolbar = [['Source']] + toolbar
+            toolbar.append(['Source'])
+        # XXX TODO once everything's working near-perfectly, remove the
+        # Source button here:
+        else:
+            toolbar.append(['Source'])
         return toolbar
 
     class Media:
         js = (
               urljoin(settings.STATIC_URL, 'js/jquery/jquery-1.5.min.js'),
+              urljoin(settings.STATIC_URL, 'js/ckeditor/sapling_utils.js'),
         )
