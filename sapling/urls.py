@@ -14,7 +14,7 @@ urlpatterns = patterns('',
     (r'^search/', include('sapling.search.urls')),
     (r'^', include('sapling.recentchanges.urls')),
     (r'^admin/', include(admin.site.urls)),
-    (r'^comments/', include('sapling.comments.urls')),
+    (r'^comments/', include('sapling.wikicomments.urls')),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # Fall back to pages.

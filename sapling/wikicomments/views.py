@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 
 import urllib
 
-from models import VersionedComment
+from models import WikiComment
 
 @csrf_protect
 @login_required
@@ -151,7 +151,7 @@ def edit_comment(request, next=None, using=None):
     # Look up the object we're trying to comment about
     comment_pk = data.get("comment_pk")
     try:
-        comment = VersionedComment.objects.get(pk=comment_pk)
+        comment = WikiComment.objects.get(pk=comment_pk)
         target = comment.content_object
     except ObjectDoesNotExist:
         return views.CommentPostBadRequest(

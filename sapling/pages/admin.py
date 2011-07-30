@@ -1,11 +1,11 @@
 from django.contrib import admin
 from models import Page
 
-from sapling.comments.admin import VersionedCommentInline
+from wikicomments.admin import WikiCommentInline
 
 class PageAdmin(admin.ModelAdmin):
     inlines = [
-        VersionedCommentInline,
+        WikiCommentInline,
     ]
 
 admin.site.register(Page, PageAdmin)
