@@ -6,11 +6,14 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.translation import ungettext, ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 import urllib
+
+from models import VersionedComment
 
 @csrf_protect
 @login_required
@@ -98,7 +101,7 @@ def post_comment(request, next=None, using=None):
                 "comment_will_be_posted receiver %r killed the comment" % receiver.__name__)
 
     # Save the comment and signal that it was saved
-    comment.save()
+    comment.save(comment="Comment posted: %s%s" % (comment.comment[:50], '...' if len(comment.comment) > 50 else ''))
     signals.comment_was_posted.send(
         sender  = comment.__class__,
         comment = comment,
@@ -127,7 +130,65 @@ def post_comment(request, next=None, using=None):
         joiner = ('?' in next) and '&' or '?'
         next += joiner + urllib.urlencode(payload) + anchor
 
-    if request.is_ajax():
-        return render(request, 'comments/includes/comment_body.html')
-    else:
-        return HttpResponseRedirect(next)
+    return HttpResponseRedirect(next)
+
+@csrf_protect
+@login_required
+@require_POST
+def edit_comment(request, next=None, using=None):
+    """
+    Handles receipt of an edited comment.
+    """
+    # TODO: For this view, consider sticking the security data in the id=?
+
+    if not request.is_ajax():
+        return views.CommentPostBadRequest("Request is not AJAX.")
+
+    # Fill out some initial data fields from an authenticated user, if present
+    data = request.POST.copy()
+    data["name"] = request.user.get_full_name()
+
+    # Look up the object we're trying to comment about
+    comment_pk = data.get("comment_pk")
+    try:
+        comment = VersionedComment.objects.get(pk=comment_pk)
+        target = comment.content_object
+    except ObjectDoesNotExist:
+        return views.CommentPostBadRequest(
+            "No object matching comment_pk %r could be found." % escape(comment_pk))
+
+    # Ensure the user has ability to edit the comment
+    if request.user != comment.user:
+        return views.CommentPostBadRequest("User did not post this comment!")
+    elif not comment.is_public or comment.is_removed:
+        return views.CommentPostBadRequest("Comment is no longer public.")
+
+    # Update the comment instance.
+    comment.comment = data.get("comment")
+
+    # Signal that the comment is about to be saved
+    responses = signals.comment_will_be_posted.send(
+        sender  = comment.__class__,
+        comment = comment,
+        request = request
+    )
+
+    for (receiver, response) in responses:
+        if response == False:
+            return views.CommentPostBadRequest(
+                "comment_will_be_posted receiver %r killed the comment" % receiver.__name__)
+
+    # Save the comment and signal that it was saved
+    comment.save(comment="Comment of %s edited: %s%s" % (comment.submit_date, comment.comment[:50], '...' if len(comment.comment) > 50 else ''))
+    signals.comment_was_posted.send(
+        sender  = comment.__class__,
+        comment = comment,
+        request = request
+    )
+
+    # Prepare a message
+    messages.add_message(request, messages.INFO,
+        _("You have successfully edited your comment of %s." %
+          comment.submit_date))
+
+    return render(request, 'comments/includes/comment_body.html', {'comment':comment})

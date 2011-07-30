@@ -8,11 +8,13 @@
 <script type="text/javascript">
 // In-Line text editing for comments
 $(document).ready(function() {
-    $('.editable_comment_body').editable('/comments/post/', {
+    $('.editable_comment_body').editable('/comments/edit/', {
         type: 'textarea',
         submit: '{% trans "Save changes" %}',
         cancel: '{% trans "Cancel" %}',
-        event: 'editclick'
+        event: 'editclick',
+        name: 'comment',
+        id: 'comment_pk'
     });
     $('.edit_comment_button').click(function(event) {
         var pk = $(event.currentTarget).attr("id");
