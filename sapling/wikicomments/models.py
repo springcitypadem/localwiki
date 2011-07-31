@@ -6,6 +6,7 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.db import models
 from django.utils.formats import localize
+from django.utils.html import strip_tags
 from django.utils.translation import ugettext_lazy as _
 
 from versionutils.versioning import TrackChanges
@@ -76,7 +77,7 @@ class WikiComment(models.Model):
     def __unicode__(self):
         return "%s on %s %s: %s%s" % (
             self.name, self.content_type, self.content_object,
-            self.comment[:50], '...' if len(self.comment) > 50 else '',)
+            strip_tags(self.comment[:50]), '...' if len(self.comment) > 50 else '',)
 
     def get_history_list(self):
         try:
@@ -87,7 +88,7 @@ class WikiComment(models.Model):
                         r.history_info.user,
                         r.history_info.user_ip,
                         localize(r.history_info.date),
-                        r.history_info.comment or 'no comment',
+                        strip_tags(r.history_info.comment) or 'no comment',
                         ) for r in self.history.all()
                     )
             )
@@ -155,3 +156,7 @@ class WikiComment(models.Model):
             'url': self.get_absolute_url()
         }
         return _('Posted by %(user)s at %(date)s\n\n%(comment)s\n\nhttp://%(domain)s%(url)s') % d
+
+    def _get_visible(self):
+        return self.is_public and not self.is_removed
+    visible = property(_get_visible)

@@ -18,7 +18,7 @@
   <dd>
     <p {% if comment.user == user %}class="editable_comment_body"
        {% else %}class="comment_body"{% endif %}
-       id="{{ comment.pk }}" itemprop="description">{{ comment.comment }}</p>
+       id="{{ comment.pk }}" itemprop="description">{{ comment.comment|linebreaksbr }}</p>
   </dd>
   </span>
   {% endfor %}

@@ -2,24 +2,104 @@
 {% load i18n %}
 {% get_comment_count for page as comment_count %}
 {% if comment_count > 0 and user.is_authenticated %}
-<script type="text/javascript" src="{{ STATIC_URL }}js/jquery/jquery-1.6.2.min.js"></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/jquery.jeditable.mini.js"></script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.14/jquery-ui.min.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}js/csrfcookie.js"></script>
 <script type="text/javascript">
 // In-Line text editing for comments
-$(document).ready(function() {
-    $('.editable_comment_body').editable('/comments/edit/', {
+$(function() {
+    $('p.editable_comment_body').editable('/comments/edit/', {
         type: 'textarea',
         submit: '{% trans "Save changes" %}',
         cancel: '{% trans "Cancel" %}',
+        loadurl: '/comments/fetch/',
+        loaddata: {format: 'raw'},
         event: 'editclick',
         name: 'comment',
         id: 'comment_pk'
     });
     $('.edit_comment_button').click(function(event) {
+        // clear messages and open an edit box
         var pk = $(event.currentTarget).attr("id");
+        $('ul[class="messages"][id="inline"]').detach();
         $('p[class="editable_comment_body"][id="' + pk + '"]').trigger('editclick');
+    });
+}); // $(document).ready
+
+// Confirm comment deletion
+// TODO: ckeditor appears to have modals!  (e.g. link editing)... use those
+$(function() {
+    $('body').append('<div id="delete_comment_dialog" title="Confirm deletion">Are you <b>sure</b> you want to delete this comment?</div>');
+    $('.delete_comment_button').click(function(event) {
+        event.preventDefault();
+        var pk = $(event.currentTarget).attr("id");
+        var targetUrl = '/comments/delete/';
+
+        $('div#delete_comment_dialog').dialog({
+            modal: true,
+            buttons: {
+                "Delete": function() {
+                    $(this).dialog("close");
+                    // send to server, replace comment with result
+                    $.post(targetUrl, { 'comment_pk': pk },
+                        function(data) {
+                            var content = $(data);
+                            $('dt#c' + pk).parent().empty().append(content);
+                        }
+                    );
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                }
+            }
+        });
+
+        // Make the delete button (#1) red and the cancel button (#2) focused.
+        $(".ui-button:first").css({color:"red"});
+        $(".ui-button").focus();
     });
 });
 </script>
+<style>
+/* horrible attempt at CSS for the modal delete confirmation dialog */
+.ui-dialog {
+    border: 3px solid grey;
+    display: block;
+    padding: 10px;
+    background-color: white;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+.ui-dialog-titlebar {
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+}
+.ui-dialog-titlebar-close {
+    display: none;
+}
+.ui-dialog-buttonpane {
+    border-width: 1px 0 0 0;
+    margin: .5em 0 0 0;
+    display: block;
+    width: 300px;
+}
+.ui-button {
+    float: right;
+}
+.ui-button-text-only {
+    padding: .4em 1em;
+    line-height: 1.4;
+}
+.ui-widget-overlay {
+    background-color: #AAA;
+    background-image: url("{{ STATIC_URL }}theme/img/footer-bg.png");
+    position: absolute;
+    opacity: 0.80;
+    display: block;
+    top: 0;
+    left: 0;
+}
+</style>
 {% endif %}

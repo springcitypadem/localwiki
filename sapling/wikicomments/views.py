@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.db import models
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.utils.translation import ungettext, ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
@@ -192,3 +192,75 @@ def edit_comment(request, next=None, using=None):
           comment.submit_date))
 
     return render(request, 'comments/includes/comment_body.html', {'comment':comment})
+
+@csrf_protect
+@login_required
+@require_POST
+def delete_comment(request, next=None, using=None):
+    """
+    Handles deletion of comments.
+    """
+    if not request.is_ajax():
+        return views.CommentPostBadRequest("Request is not AJAX.")
+
+    # Fill out some initial data fields from an authenticated user, if present
+    data = request.POST.copy()
+
+    # Look up the object we're trying to comment about
+    comment_pk = data.get("comment_pk")
+    try:
+        comment = WikiComment.objects.get(pk=comment_pk)
+        target = comment.content_object
+    except ObjectDoesNotExist:
+        return views.CommentPostBadRequest(
+            "No object matching comment_pk %r could be found." % escape(comment_pk))
+
+    # Ensure the user has ability to edit the comment
+    if request.user != comment.user:
+        return views.CommentPostBadRequest("User did not post this comment!")
+    elif not comment.is_public or comment.is_removed:
+        return views.CommentPostBadRequest("Comment is no longer public.")
+
+    # Nuke it
+    comment.is_removed = True
+
+    # Signal that the comment is about to be saved
+    responses = signals.comment_will_be_posted.send(
+        sender  = comment.__class__,
+        comment = comment,
+        request = request
+    )
+
+    for (receiver, response) in responses:
+        if response == False:
+            return views.CommentPostBadRequest(
+                "comment_will_be_posted receiver %r killed the comment" % receiver.__name__)
+
+    # Save the comment and signal that it was saved
+    comment.save(comment="Comment of %s deleted" % (comment.submit_date))
+    signals.comment_was_posted.send(
+        sender  = comment.__class__,
+        comment = comment,
+        request = request
+    )
+
+    # Prepare a message
+    messages.add_message(request, messages.INFO,
+        _("Your comment of %s has been deleted." %
+          comment.submit_date))
+
+    return render(request, 'comments/includes/comment_body.html', {'comment':comment})
+
+def fetch_comment(request):
+    """
+    Returns an HTML snippet of a comment.
+    """
+    comment_pk = request.GET.get('comment_pk', None)
+    format = request.GET.get('format', 'pretty')
+
+    comment = get_object_or_404(WikiComment, pk=comment_pk)
+
+    if not comment.is_public or comment.is_removed:
+        return views.CommentPostBadRequest("Comment is no longer public.")
+
+    return render(request, 'comments/includes/comment_body.html', {'comment':comment, 'format':format})

@@ -1,2 +1,1 @@
-{{ comment.comment }}
-
+{% if messages %}<ul class="messages" id="inline">{% for message in messages %}<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>{% endfor %}</ul>{% endif %}{% if comment.visible %}{% if format == 'raw' %}{{ comment.comment|safe }}{% else %}{{ comment.comment|linebreaksbr }}{% endif %}{% endif %}
