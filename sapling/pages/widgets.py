@@ -2,6 +2,7 @@ from urlparse import urljoin
 
 from django.conf import settings
 
+from utils.static import static_url
 from ckeditor.widgets import CKEditor
 import models
 
@@ -17,6 +18,8 @@ class WikiEditor(CKEditor):
             'filebrowserAttachfileUploadUrl': '_upload',
             'filebrowserAttachfileBrowseUrl': '_filebrowser/files',
             'domcleanupAllowedTags': models.allowed_tags,
+            'domcleanupAllowedAttributes': models.allowed_attributes_map,
+            'domcleanupAllowedStyles': models.allowed_styles_map,
             'toolbarCanCollapse': False,
             'disableNativeSpellChecker': False,
             'browserContextMenuOnCtrl': True,
@@ -52,14 +55,15 @@ class WikiEditor(CKEditor):
         plugins = ['insertimage', 'simpleimage', 'domcleanup', 'seamless',
                    'simpletable', 'simpletabletools', 'customenterkey',
                    'pagelink', 'inheritcss', 'customstylescombo',
-                   'customsourcearea', 'ckfixes']
+                   'customsourcearea', 'ckfixes', 'wikiplugins', 'includepage']
         return ','.join(plugins)
 
     def get_toolbar(self):
         basic_styles = ['Bold', 'Italic', 'Underline', 'Strike']
         styles = ['Styles']
         links = ['PageLink', 'PageAnchor']
-        media = ['InsertImage', 'AttachFile', 'SimpleTable', 'HorizontalRule']
+        media = ['InsertImage', 'AttachFile', 'SimpleTable', 'HorizontalRule',
+                 'Plugins']
         lists = ['NumberedList', 'BulletedList']
         align = ['JustifyLeft', 'JustifyCenter', 'JustifyRight']
         indent = ['Outdent', 'Indent']
@@ -78,6 +82,6 @@ class WikiEditor(CKEditor):
 
     class Media:
         js = (
-              urljoin(settings.STATIC_URL, 'js/jquery/jquery-1.5.min.js'),
-              urljoin(settings.STATIC_URL, 'js/ckeditor/sapling_utils.js'),
+              static_url('js/jquery/jquery-1.5.min.js'),
+              static_url('js/ckeditor/sapling_utils.js'),
         )

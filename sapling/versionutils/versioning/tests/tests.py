@@ -1001,14 +1001,33 @@ class TrackChangesTest(TestCase):
         m = M24SubclassProxy(a="dude")
         m.save()
         self.assertEqual(type(m.history.most_recent()), m.history.model)
+        m.a += "!"
+        m.save()
+        self.assertEqual(m.history.most_recent().a, "dude!")
+        self.assertEqual(m.history.as_of(version=1).a, "dude")
 
         m = M25SubclassAbstract(a="new", b="test")
         m.save()
         self.assertEqual(type(m.history.most_recent()), m.history.model)
+        m.a += "!"
+        m.save()
+        self.assertEqual(m.history.most_recent().a, "new!")
+        self.assertEqual(m.history.as_of(version=1).a, "new")
 
         m = M26SubclassConcreteA(a="hi", b="there")
         m.save()
         self.assertEqual(type(m.history.most_recent()), m.history.model)
+        m.a += "!"
+        m.b += "!"
+        m.save()
+        # The fields on the class with TrackChanges() set should be
+        # versioned.
+        self.assertEqual(m.history.most_recent().b, "there!")
+        self.assertEqual(m.history.as_of(version=1).b, "there")
+        # But the fields on the base class, which isn't versioned,
+        # shouldn't be tracked.
+        self.assertEqual(m.history.most_recent().a, "hi!")
+        self.assertEqual(m.history.as_of(version=1).a, "hi!")
 
         m = M26SubclassConcreteB(a="hi", b="there")
         m.save()

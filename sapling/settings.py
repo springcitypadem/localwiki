@@ -63,14 +63,20 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# Should we display user's IP addresses to non-admin users?
+SHOW_IP_ADDRESSES = True
+
 LOGIN_REDIRECT_URL = '/'
 
 HAYSTACK_SITECONF = 'sapling.search_sites'
 HAYSTACK_SEARCH_ENGINE = 'solr'
 
-OL_API = STATIC_URL + 'openlayers/OpenLayers.js'
-OLWIDGET_CSS = '%solwidget/css/sapling.css' % STATIC_URL
-CLOUDMADE_API = '%solwidget/js/sapling_cloudmade.js' % STATIC_URL
+THUMBNAIL_BACKEND = 'utils.sorl_backends.AutoFormatBackend'
+
+OL_API = STATIC_URL + 'openlayers/OpenLayers.js?tm=1317359250'
+OLWIDGET_CSS = '%solwidget/css/sapling.css?tm=1317359250' % STATIC_URL
+OLWIDGET_CSS = '%solwidget/js/olwidget.js?tm=1317359250' % STATIC_URL
+CLOUDMADE_API = '%solwidget/js/sapling_cloudmade.js?tm=1317359250' % STATIC_URL
 
 COMMENTS_APP = 'wikicomments'
 

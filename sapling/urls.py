@@ -17,6 +17,14 @@ urlpatterns = patterns('',
     (r'^comments/', include('sapling.wikicomments.urls')),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+# This should only happen if you're using the local dev server with
+# DEBUG=False.
+if not settings.DEBUG:
+    urlpatterns += patterns('',
+        (r'^static/(?P<path>.*)$', 'django.views.static.serve',
+        {'document_root': settings.STATIC_ROOT}),
+    )
+
 # Fall back to pages.
 urlpatterns += patterns('',
     (r'^', include(pages.site.urls)),
