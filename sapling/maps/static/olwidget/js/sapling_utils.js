@@ -93,7 +93,7 @@ SaplingMap = {
           {
               map.zoomToExtent(featureBounds);
           }
-          $('#header_title_detail').empty().append(' for ' + feature.attributes.html);
+          $('#header_title_detail').empty().append(gettext(' for ') + feature.attributes.html);
           var zoomedStyle = $.extend({}, 
               layer.styleMap.styles.select.defaultStyle,
               { fillOpacity: '0', strokeDashstyle: 'dash' });
@@ -113,7 +113,7 @@ SaplingMap = {
 
     beforeUnload: function(e) {
         if(SaplingMap.is_dirty) {
-            return e.returnValue = "You've made changes but haven't saved.  Are you sure you want to leave this page?";
+            return e.returnValue = gettext("You've made changes but haven't saved.  Are you sure you want to leave this page?");
         }
     },
 
@@ -156,7 +156,7 @@ SaplingMap = {
             }
         };
         var selectedFeature = layer.selectedFeatures && layer.selectedFeatures[0];
-        var header = 'Things on this map:';
+        var header = gettext('Things on this map:');
         var results = $('<ol>');
         var viewedArea = map.getExtent().toGeometry().getArea();
         $.each(layer.features, function(index, feature) {
@@ -168,7 +168,7 @@ SaplingMap = {
            {
                if(selectedFeature.geometry.CLASS_NAME == "OpenLayers.Geometry.Polygon")
                {
-                   header = 'Things inside ' + selectedFeature.attributes.html + ':';
+                   header = gettext('Things inside ') + selectedFeature.attributes.html + ':';
                    $.each(feature.geometry.getVertices(), function(ind, vertex){
                        if(selectedFeature.geometry.containsPoint(vertex))
                        {
@@ -178,7 +178,7 @@ SaplingMap = {
                    });
                } else {
                    var threshold = 500; // TODO: what units is this?
-                   header = 'Things near ' + selectedFeature.attributes.html + ':';
+                   header = gettext('Things near ') + selectedFeature.attributes.html + ':';
                    listResult = selectedFeature.geometry.distanceTo(feature.geometry) < threshold;
                    if(feature.geometry.containsPoint)
                        listResult = listResult && !feature.geometry.containsPoint(selectedFeature.geometry);
