@@ -768,6 +768,7 @@ div.templates li {
 }
 #recentchanges h3 {
     margin-top: 1em;
+    color: #888;
 }
 #recentchanges h3 a, #recentchanges h3 a:link {
     color: #444;
@@ -799,12 +800,19 @@ div.templates li {
     margin-top: -0.6em;
 }
 
-
 #recentchanges li {
     list-style-type: none;
     margin-left: 0;
     padding-left: 30px;
     margin-bottom: 0.7em;
+}
+
+#recentchanges li a {
+    text-decoration: none; /* Underline is too intense here */
+    color: #5d66bf; /* on white bg, so let's go lighter */
+}
+#recentchanges li a:hover {
+    color: #444;
 }
 
 #recentchanges .changelabel {
