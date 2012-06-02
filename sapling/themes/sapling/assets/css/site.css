@@ -808,8 +808,7 @@ div.templates li {
 }
 
 #recentchanges li a {
-    text-decoration: none; /* Underline is too intense here */
-    color: #5d66bf; /* on white bg, so let's go lighter */
+    color: #5d66bf; /* let's go a bit lighter */
 }
 #recentchanges li a:hover {
     color: #444;
