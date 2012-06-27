@@ -64,10 +64,7 @@ SaplingMap = {
             this.setup_dynamic_map(map);
         }
         this._open_editing(map);
-
-        if(map.opts.permalink) {
-            map.addControl(new OpenLayers.Control.Permalink({anchor: true}));
-        }
+        this._add_controls(map);
     },
 
     _set_selected_style: function(map, feature) {
@@ -455,8 +452,38 @@ SaplingMap = {
         for (var i = 0; i < map.controls.length; i++) {
             if (map.controls[i] && map.controls[i].CLASS_NAME == 
                 "olwidget.EditableLayerSwitcher") { 
-                return map.vectorLayers[0];
+                layer = map.vectorLayers[0];
+                if (layer.controls)
+                    return layer;
             }
+        }
+    },
+
+    _add_controls: function(map) {
+        if (!layer) {
+            var layer = map.vectorLayers[0];
+        }
+
+        if(map.opts.permalink) {
+            map.addControl(new OpenLayers.Control.Permalink({anchor: true}));
+        }
+
+        // If editing is off then we want features, when hovered over,
+        // to show a pointer cursor because they can be clicked on.  We
+        // extend DragFeature to achive this, as it's the only way to
+        // get the feature hover event right now.
+        if (!this._get_editing_layer(map)) {
+            var HoverControl = OpenLayers.Class(OpenLayers.Control.DragFeature, {
+                overFeature: function() {
+                    map.div.style.cursor = 'pointer';
+                },
+                outFeature: function() {
+                    map.div.style.cursor = 'inherit';
+                }
+            });
+            var hover = new HoverControl(layer);
+            map.addControl(hover);
+            hover.activate();
         }
     },
 
