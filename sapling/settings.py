@@ -61,6 +61,7 @@ LANGUAGES = (
     ('de_CH', _('German (Swiss)')),
     ('es_AR', _('Spanish (Argentina)')),
     ('da_DK', _('Danish')),
+    ('it_IT', _('Italian')),
     ('pt_PT', _('Portuguese')),
 )
 
@@ -206,6 +207,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.transaction.TransactionMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'utils.middleware.TrackPOSTMiddleware',
+
+    'utils.middleware.ServerStartupMiddleware',
 )
 
 # Dummy cache - TODO: switch to memcached by default
@@ -241,6 +244,7 @@ INSTALLED_APPS = (
     'staticfiles',
     'guardian',
     'south',
+    'tastypie',
     'honeypot',
 
     # Our apps
@@ -254,6 +258,7 @@ INSTALLED_APPS = (
     'search',
     'redirects',
     'dashboard',
+    'api',
     'utils',
     'tags',
 )

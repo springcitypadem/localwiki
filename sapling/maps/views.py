@@ -95,8 +95,6 @@ class MapGlobalView(ListView):
 
     def get_queryset(self):
         queryset = super(MapGlobalView, self).get_queryset()
-        if not filter_by_zoom:
-            return queryset
         # We order by -length so that the geometries are in that
         # order when rendered by OpenLayers -- this creates the
         # correct stacking order.
@@ -104,8 +102,10 @@ class MapGlobalView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(MapGlobalView, self).get_context_data(**kwargs)
-        context['map'] = self.get_map()
-        context['dynamic_map'] = self.dynamic
+        map_objects = [(obj.geom, popup_html(obj)) for obj in self.object_list]
+        context['map'] = InfoMap(map_objects, options={
+            'dynamic': True, 'zoomToDataExtent': False})
+        context['dynamic_map'] = True
         return context
 
     def get_map_objects(self):

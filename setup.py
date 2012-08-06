@@ -128,10 +128,9 @@ install_requires = [
     'django-staticfiles==1.2.1',
     'django-registration==0.8.0',
     'django-olwidget==0.46-custom1',
-    'django-honeypot==0.3.0-custom',
+    'django-honeypot==0.3.0-custom2',
+    'django-tastypie==0.9.12-custom',
     'django-qsstats-magic==0.7',
-    # Actually optional:
-    'Sphinx==1.1.3',
 ]
 if int(os.getenv('DISABLE_INSTALL_REQUIRES', '0')):
     install_requires = None
@@ -153,7 +152,8 @@ setup(
     install_requires=install_requires,
     dependency_links=[
         'https://github.com/philipn/olwidget/tarball/custom_base_layers_fixed#egg=django-olwidget-0.46-custom1',
-        'https://github.com/mivanov/django-honeypot/tarball/master#egg=django-honeypot-0.3.0-custom',
+        'https://github.com/philipn/django-honeypot/tarball/master#egg=django-honeypot-0.3.0-custom2',
+        'https://github.com/philipn/django-tastypie/tarball/localwiki_master#egg=django-tastypie-0.9.12-custom',
     ],
     entry_points={
         'console_scripts': ['localwiki-manage=sapling.manage:main'],

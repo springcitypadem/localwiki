@@ -2,12 +2,23 @@ import copy
 from dateutil.parser import parse as dateparser
 
 from django.core.urlresolvers import reverse
-from django.views.generic.list import ListView
 from django.http import HttpResponse, HttpResponseRedirect
-from django.views.generic.detail import DetailView
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from django.db.models.aggregates import Count
+from django.views.generic import UpdateView
+from django.views.generic.list import ListView
+from django.views.generic.detail import DetailView
+
+from utils.views import CreateObjectMixin, PermissionRequiredMixin,\
+    Custom404Mixin
+from versionutils.versioning.views import VersionsList, RevertView, UpdateView
+from versionutils.diff.views import CompareView
+from maps.views import MapForTag
+from maps.widgets import InfoMap
+from tags.models import PageTagSet, Tag, slugify
+from tags.forms import PageTagSetForm
+from pages.models import Page
 
 from versionutils.versioning.views import VersionsList, RevertView, UpdateView
 from versionutils.diff.views import CompareView
@@ -78,9 +89,11 @@ class TaggedList(ListView):
         return context
 
 
-class PageTagSetUpdateView(PageNotFoundMixin, CreateObjectMixin, UpdateView):
+class PageTagSetUpdateView(PageNotFoundMixin, PermissionRequiredMixin,
+        CreateObjectMixin, UpdateView):
     model = PageTagSet
     form_class = PageTagSetForm
+    permission = 'pages.change_page'
 
     def get_object(self):
         page_slug = self.kwargs.get('slug')
@@ -95,6 +108,9 @@ class PageTagSetUpdateView(PageNotFoundMixin, CreateObjectMixin, UpdateView):
         if next:
             return next
         return reverse('pages:tags', args=[self.kwargs.get('slug')])
+
+    def get_protected_object(self):
+        return self.object.page
 
 
 class PageTagSetVersions(PageNotFoundMixin, VersionsList):
@@ -160,8 +176,8 @@ class PageTagSetRevertView(PermissionRequiredMixin, RevertView):
     def get_object(self):
         page_slug = self.kwargs.get('slug')
         page = Page.objects.get(slug=page_slug)
-        return page.pagetagset.versions.as_of(version=int(
-                                                    self.kwargs['version']))
+        return page.pagetagset.versions.as_of(
+            version=int(self.kwargs['version']))
 
     def get_protected_object(self):
         return self.object.page
